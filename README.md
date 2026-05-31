@@ -1,6 +1,4 @@
-可以，下面這份可以直接整份取代 `Ray-app/README.md`。
 
-```md
 # Ray Uber App
 
 React frontend for a Ray distributed uber-ride-hailing system.

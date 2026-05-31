@@ -1,70 +1,134 @@
-# Getting Started with Create React App
+可以，下面這份可以直接整份取代 `Ray-app/README.md`。
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+```md
+# Ray Uber App
+
+React frontend for a Ray distributed uber-ride-hailing system.
+
+This version is intended to work with the synchronized backend repository. The frontend and backend API contract are tracked together for this branch so the UI implementation can be reviewed alongside the current API design.
+
+## Overview
+
+Ray Uber App contains two frontend views:
+
+- Rider app for creating and tracking ride requests
+- Ray admin dashboard for monitoring simulated orders, workers, cluster nodes, and autoscaling status
+
+Routes:
+
+- `/` opens the rider app
+- `/admin` opens the Ray admin dashboard
+
+## Current Version Scope
+
+This branch includes:
+
+- React frontend implementation
+- Rider-facing ride request flow
+- Admin-facing Ray cluster monitoring UI
+- API documentation for the synchronized backend version
+
+The backend implementation is maintained separately and should be checked together with this frontend branch when reviewing this version.
+
+## Project Structure
+
+```text
+Ray-app/
+├── docs/
+│   └── uber-api-v3.md
+├── public/
+├── src/
+│   ├── App.js
+│   ├── RideApp.jsx
+│   ├── RayAdminApp.jsx
+│   └── ...
+├── package.json
+├── package-lock.json
+└── README.md
+```
+
+## API Document
+
+The API document for this version is included in:
+
+```text
+docs/uber-api-v3.md
+```
+
+This document should be read together with the synchronized backend repository, because the frontend behavior depends on the backend API contract.
+
+## Requirements
+
+- Node.js
+- npm
+
+## Installation
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+## Development
+
+Start the development server:
+
+```bash
+npm start
+```
+
+Open the rider app:
+
+```text
+http://localhost:3000
+```
+
+Open the admin dashboard:
+
+```text
+http://localhost:3000/admin
+```
+
+## Build
+
+Create a production build:
+
+```bash
+npm run build
+```
+
+The production files will be generated in:
+
+```text
+build/
+```
 
 ## Available Scripts
 
-In the project directory, you can run:
-
 ### `npm start`
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Runs the app in development mode.
 
 ### `npm test`
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Runs the test runner.
 
 ### `npm run build`
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Builds the app for production.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Branch Note
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+This work is currently kept on a feature branch and is not intended to be pushed directly to `main`.
 
-### `npm run eject`
+Current branch:
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```text
+frontend/ray-uber-app
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Notes
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+This repository currently focuses on the frontend UI and the API documentation needed for the synchronized frontend-backend version. Future integration work can merge or reference this branch from the backend repository when the implementation is ready.
+```

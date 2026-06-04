@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react"
+import { api } from "./api/api"
 
 // ─── 設計 token（與 Ray Admin dashboard 共用相同變數名稱）───
 const TOKEN = {
@@ -105,7 +106,6 @@ function EtaBadge({ waitMin, surge }) {
 
 // ─── LocationInput ───
 function LocationInput({ icon, placeholder, value, onChange, autoFocus }) {
-  const [focused, setFocused] = useState(false)
   return (
     <div style={{
       display: "flex", alignItems: "center", gap: 12,
@@ -119,8 +119,6 @@ function LocationInput({ icon, placeholder, value, onChange, autoFocus }) {
         autoFocus={autoFocus}
         value={value}
         onChange={e => onChange(e.target.value)}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
         placeholder={placeholder}
         style={{
           border: "none", outline: "none", fontSize: 14,
@@ -616,15 +614,13 @@ export default function RideApp() {
   const [driverInfo, setDriverInfo] = useState({ name:"王大明", rating:4.8, plate:"ABC-1234", eta:4 })
   const [fare, setFare] = useState(268)
   const [tripElapsed, setTripElapsed] = useState(0)
-  const TRIP_TOTAL = 20  // 行程中倒數秒數
+  const TRIP_TOTAL = 20
+  const unsubRef = useRef(null)
 
-  // ── 模擬 GET /cluster/eta polling
+  // ── GET /cluster/eta polling
   useEffect(() => {
-    let count = 2
-    const id = setInterval(() => {
-      count = Math.max(0, count + (Math.random() > 0.5 ? 1 : -1))
-      setEtaData({ waitMin: Math.max(1, Math.round(count / 2)), surge: count > 8 })
-    }, 4000)
+    api.getEta().then(setEtaData)
+    const id = setInterval(() => api.getEta().then(setEtaData), 4000)
     return () => clearInterval(id)
   }, [])
 
@@ -641,39 +637,33 @@ export default function RideApp() {
     return () => clearInterval(id)
   }, [screen])
 
-  // ── 模擬 WebSocket order_updated push
-  const simulateWS = () => {
-    setTimeout(() => setTripStatus("matching"), 1000)
-    setTimeout(() => {
-      setTripStatus("driver_assigned")
-      setDriverInfo({ name:"王大明", rating:4.8, plate:"ABC-1234", eta:4 })
-      setScreen("driver")
-    }, 3500)
-    // ★ 新增：driver_assigned → on_trip
-    setTimeout(() => {
-      setTripStatus("on_trip")
-      setScreen("trip")
-    }, 6000)
-    // ★ 新增：on_trip → completed（行程跑完再結束）
-    setTimeout(() => {
-      setTripStatus("completed")
-      setFare(orderData?.price ? orderData.price + 8 : 268)
-      setScreen("done")
-    }, 6000 + TRIP_TOTAL * 1000)
-  }
-
   const handleConfirm = (data) => {
     setOrderData(data)
     setScreen("confirm")
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setTripStatus("pending")
     setScreen("matching")
-    simulateWS()
+
+    const { order_id } = await api.createRideOrder(orderData)
+
+    unsubRef.current = api.subscribeRideOrder(order_id, ({ status, trip, result }) => {
+      setTripStatus(status)
+      if (status === "driver_assigned" && trip) {
+        setDriverInfo({ name: trip.driver_name, rating: trip.driver_rating, plate: trip.license_plate, eta: trip.estimated_arrival })
+        setScreen("driver")
+      } else if (status === "on_trip") {
+        setScreen("trip")
+      } else if (status === "completed") {
+        setFare(result?.fare ?? (orderData?.price ? orderData.price + 8 : 268))
+        setScreen("done")
+      }
+    })
   }
 
   const handleRestart = () => {
+    if (unsubRef.current) { unsubRef.current(); unsubRef.current = null }
     setScreen("home")
     setTripStatus("pending")
     setOrderData(null)

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { api } from "./api/api"
 
 // ─── Design Tokens（與 RideApp.jsx 共用）───
 const T = {
@@ -288,43 +289,29 @@ export default function RayAdminApp() {
   const [page, setPage] = useState("overview")
   const [wsConnected, setWsConnected] = useState(true)
 
-  // ── Mock data state（真實接後端時換成 fetch + WS）
-  const [orders, setOrders] = useState([
-    { id:"a1b2", type:"ride",          status:"on_trip",   worker:"ray-worker-1", elapsed:8,  total:20, ts:"14:23" },
-    { id:"c3d4", type:"ride",          status:"completed", worker:"ray-worker-2", elapsed:15, total:15, ts:"14:21" },
-    { id:"e5f6", type:"heavy_compute", status:"pending",   worker:"—",            elapsed:0,  total:12, ts:"14:23" },
-    { id:"g7h8", type:"image_resize",  status:"failed",    worker:"ray-worker-1", elapsed:5,  total:20, ts:"14:20" },
-    { id:"i9j0", type:"ride",          status:"completed", worker:"ray-worker-2", elapsed:8,  total:8,  ts:"14:19" },
-  ])
-  const [workers, setWorkers] = useState([
-    { id:"ray-head",     role:"head",   status:"alive",   cpu:0.30 },
-    { id:"ray-worker-1", role:"worker", status:"alive",   cpu:0.82 },
-    { id:"ray-worker-2", role:"worker", status:"alive",   cpu:0.58 },
-  ])
-  const [logs, setLogs] = useState([
-    { time:"14:20", action:"scale_up",   worker:"ray-worker-2", reason:"pending=5, polls=3" },
-    { time:"14:10", action:"scale_down", worker:"ray-worker-3", reason:"cpu=4% < 10%" },
-    { time:"13:55", action:"scale_up",   worker:"ray-worker-2", reason:"pending=4, polls=3" },
-  ])
-  const [metrics, setMetrics] = useState({ workers:2, pending:5, cpu:72, cooldown:8, lastAction:"scale_up" })
-  // ── 模擬 WS heartbeat（每秒更新）
+  const [orders,  setOrders]  = useState([])
+  const [workers, setWorkers] = useState([])
+  const [logs,    setLogs]    = useState([])
+  const [metrics, setMetrics] = useState({ workers: 0, pending: 0, cpu: 0, cooldown: 0, lastAction: "—" })
+
+  // ── Initial data load
+  useEffect(() => {
+    api.getAdminSnapshot().then(({ orders, workers, logs, metrics }) => {
+      setOrders(orders)
+      setWorkers(workers)
+      setLogs(logs)
+      setMetrics(metrics)
+    })
+  }, [])
+
+  // ── Live updates via WS / mock heartbeat
   useEffect(() => {
     if (!wsConnected) return
-    const id = setInterval(() => {
-      setOrders(prev => prev.map(o => {
-        if (o.status === "on_trip" || o.status === "running") {
-          const next = Math.min(o.elapsed + 1, o.total)
-          return { ...o, elapsed: next, status: next >= o.total ? "completed" : o.status }
-        }
-        return o
-      }))
-      setMetrics(prev => ({
-        ...prev,
-        cooldown: Math.max(0, prev.cooldown - 1),
-        pending: Math.max(0, prev.pending + (Math.random() > 0.6 ? 1 : -1)),
-      }))
-    }, 1000)
-    return () => clearInterval(id)
+    const unsub = api.subscribeAdminUpdates(({ orders: o, metrics: m }) => {
+      if (o) setOrders(o)
+      if (m) setMetrics(prev => ({ ...prev, ...m }))
+    })
+    return unsub
   }, [wsConnected])
 
   const pageTitle = { overview:"Overview", orders:"Orders", cluster:"Cluster nodes" }

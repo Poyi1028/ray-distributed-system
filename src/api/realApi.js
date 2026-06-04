@@ -49,6 +49,7 @@ export function subscribeRideOrder(orderId, callback) {
 export async function getAdminSnapshot() {
   const [ordersRes, statusRes, historyRes] = await Promise.all([ //Promise.all得用途是：把三個請求打包，同時發出，等三個都回來才繼續
     fetch(`${BASE}/cluster/status`),
+    fetch(`${BASE}/orders`),
     fetch(`${BASE}/cluster/scaling-history`),
   ])
   const [orders, status, history] = await Promise.all([

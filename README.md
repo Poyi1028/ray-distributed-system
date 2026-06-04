@@ -129,4 +129,3 @@ frontend/ray-uber-app
 ## Notes
 
 This repository currently focuses on the frontend UI and the API documentation needed for the synchronized frontend-backend version. Future integration work can merge or reference this branch from the backend repository when the implementation is ready.
-```

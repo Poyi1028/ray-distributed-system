@@ -1,32 +1,80 @@
-
 # Ray Uber App
 
-React frontend for a Ray distributed uber-ride-hailing system.
+Ray Uber App is a React frontend for a distributed ride-hailing demo built around Ray-style worker orchestration.
 
-This version is intended to work with the synchronized backend repository. The frontend and backend API contract are tracked together for this branch so the UI implementation can be reviewed alongside the current API design.
+The project demonstrates how a ride order can move through a distributed system: a user creates a ride request, the system assigns and updates the order status, and an admin dashboard observes the cluster, workers, queue pressure, CPU usage, and autoscaling behavior.
 
-## Overview
+## What This Project Does
 
-Ray Uber App contains two frontend views:
+- Provides a rider UI for creating and tracking ride orders.
+- Provides an admin UI for monitoring orders, workers, cluster metrics, and scaling events.
+- Supports mock data for frontend-only demos and real backend APIs for integration.
+- Uses WebSocket updates for live order and cluster status changes.
 
-- Rider app for creating and tracking ride requests
-- Ray admin dashboard for monitoring simulated orders, workers, cluster nodes, and autoscaling status
+## Screens
 
-Routes:
+- `/` - rider app
+- `/admin` - Ray admin dashboard
 
-- `/` opens the rider app
-- `/admin` opens the Ray admin dashboard
+## Rider App
 
-## Current Version Scope
+The rider app simulates a user-facing Uber-like flow:
 
-This branch includes:
+- Enter pickup and destination locations.
+- View estimated wait time and surge status.
+- Choose a ride type.
+- Create a ride order.
+- Track the order through statuses such as pending, matching, driver assigned, on trip, and completed.
 
-- React frontend implementation
-- Rider-facing ride request flow
-- Admin-facing Ray cluster monitoring UI
-- API documentation for the synchronized backend version
+## Admin Dashboard
 
-The backend implementation is maintained separately and should be checked together with this frontend branch when reviewing this version.
+The admin dashboard is used to observe the distributed system:
+
+- Recent and active orders.
+- Worker node status.
+- CPU usage and pending task demand.
+- Autoscaling cooldown state.
+- Scaling history and cluster activity.
+
+## API Modes
+
+The frontend can run in two modes:
+
+| Mode | Purpose | Source |
+| --- | --- | --- |
+| Mock API | Run and demo the UI without a backend | `src/api/mockApi.js` |
+| Real API | Connect to the backend API and WebSocket server | `src/api/realApi.js` |
+
+The selected mode is controlled by `REACT_APP_USE_MOCK_API`.
+
+```text
+.env.development  REACT_APP_USE_MOCK_API=true
+.env.production   REACT_APP_USE_MOCK_API=false
+```
+
+## Backend Connection
+
+When using the real API mode, the frontend connects to:
+
+```text
+REACT_APP_API_BASE_URL=http://localhost:8000
+REACT_APP_WS_URL=ws://localhost:8000/ws
+```
+
+The backend API contract is documented in:
+
+```text
+docs/uber-api-v3.md
+```
+
+Main backend endpoints used by the app:
+
+- `GET /cluster/eta` - estimated wait time and surge status.
+- `POST /orders` - create a ride order.
+- `GET /orders` - fetch orders for the admin dashboard.
+- `GET /cluster/status` - fetch worker and cluster metrics.
+- `GET /cluster/scaling-history` - fetch scaling events.
+- `WS /ws` - receive live order and cluster updates.
 
 ## Project Structure
 
@@ -36,24 +84,20 @@ Ray-app/
 │   └── uber-api-v3.md
 ├── public/
 ├── src/
+│   ├── api/
+│   │   ├── api.js
+│   │   ├── mockApi.js
+│   │   └── realApi.js
 │   ├── App.js
-│   ├── RideApp.jsx
 │   ├── RayAdminApp.jsx
+│   ├── RideApp.jsx
 │   └── ...
+├── .env.development
+├── .env.production
 ├── package.json
 ├── package-lock.json
 └── README.md
 ```
-
-## API Document
-
-The API document for this version is included in:
-
-```text
-docs/uber-api-v3.md
-```
-
-This document should be read together with the synchronized backend repository, because the frontend behavior depends on the backend API contract.
 
 ## Requirements
 
@@ -62,45 +106,40 @@ This document should be read together with the synchronized backend repository, 
 
 ## Installation
 
-Install dependencies:
-
 ```bash
 npm install
 ```
 
 ## Development
 
-Start the development server:
+Start the local development server:
 
 ```bash
 npm start
 ```
 
-Open the rider app:
+Open:
 
 ```text
 http://localhost:3000
-```
-
-Open the admin dashboard:
-
-```text
 http://localhost:3000/admin
 ```
 
-## Build
+Development mode uses mock API data by default, so the frontend can be run without starting the backend.
 
-Create a production build:
+## Production Build
 
 ```bash
 npm run build
 ```
 
-The production files will be generated in:
+Production output is generated in:
 
 ```text
 build/
 ```
+
+Production mode uses the real API implementation unless `REACT_APP_USE_MOCK_API=true` is explicitly set.
 
 ## Available Scripts
 
@@ -118,14 +157,10 @@ Builds the app for production.
 
 ## Branch Note
 
-This work is currently kept on a feature branch and is not intended to be pushed directly to `main`.
-
 Current branch:
 
 ```text
-frontend/ray-uber-app
+refactor/app-structure
 ```
 
-## Notes
-
-This repository currently focuses on the frontend UI and the API documentation needed for the synchronized frontend-backend version. Future integration work can merge or reference this branch from the backend repository when the implementation is ready.
+This branch contains the React frontend and API integration structure for the Ray Uber distributed ride-hailing demo.

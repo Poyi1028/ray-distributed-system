@@ -181,7 +181,7 @@ function OverviewPage({ metrics, orders, logs, setPage }) {
     <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
       <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12 }}>
         <MetricCard label="Workers alive"  value={metrics.workers}  sub="max 5 nodes"  fillPct={metrics.workers/5*100}   fillColor={T.blue200}   />
-        <MetricCard label="Pending tasks"  value={metrics.pending}  sub="in queue"     fillPct={metrics.pending/10*100}  fillColor={T.amber200}  />
+        <MetricCard label="Pending resource demands"  value={metrics.pending}  sub="in queue"     fillPct={metrics.pending/10*100}  fillColor={T.amber200}  />
         <MetricCard label="CPU usage"      value={`${metrics.cpu}%`} sub={`${(metrics.cpu/100*2).toFixed(2)} / 2.0 cores`} fillPct={metrics.cpu} fillColor={T.teal200} />
         <MetricCard label="Cooldown"       value={`${metrics.cooldown}s`} sub={`last: ${metrics.lastAction}`} fillPct={metrics.cooldown/15*100} fillColor={T.purple200} />
       </div>

@@ -105,16 +105,29 @@ function EtaBadge({ waitMin, surge }) {
 }
 
 // ─── LocationInput ───
-function LocationInput({ icon, placeholder, value, onChange, autoFocus }) {
+function LocationInput({ icon, label, placeholder, value, onChange, autoFocus }) {
   return (
     <div style={{
       display: "flex", alignItems: "center", gap: 12,
       padding: "13px 14px",
     }}>
       <div style={{
-        width: 10, height: 10, borderRadius: icon === "circle" ? "50%" : 2,
-        background: TOKEN.black, flexShrink: 0,
-      }} />
+        display: "flex", alignItems: "center", gap: 8, flexShrink: 0,
+        minWidth: label ? 58 : "auto",
+      }}>
+        <div style={{
+          width: 10, height: 10, borderRadius: icon === "circle" ? "50%" : 2,
+          background: TOKEN.black, flexShrink: 0,
+        }} />
+        {label && (
+          <span style={{
+            fontSize: 12, fontWeight: 600, color: TOKEN.gray500,
+            whiteSpace: "nowrap",
+          }}>
+            {label}
+          </span>
+        )}
+      </div>
       <input
         autoFocus={autoFocus}
         value={value}
@@ -285,16 +298,16 @@ function HomeScreen({ onNext, etaData }) {
         <div style={{
           border: `1px solid ${TOKEN.gray200}`, borderRadius:12, overflow:"hidden",
         }}>
-          <LocationInput icon="circle" placeholder="目前位置" value={origin} onChange={setOrigin} autoFocus />
+          <LocationInput icon="circle" label="出發位置" placeholder="目前位置" value={origin} onChange={setOrigin} autoFocus />
           <div style={{ height:1, background:TOKEN.gray100, marginLeft:34 }}/>
-          <LocationInput icon="square" placeholder="目的地" value={dest} onChange={setDest} />
+          <LocationInput icon="square" label="目的地點" placeholder="目的地" value={dest} onChange={setDest} />
         </div>
 
         {/* ride type */}
         <div style={{ fontSize:12, fontWeight:600, color:TOKEN.gray400 }}>選擇車型</div>
         <div style={{ display:"flex", gap:8 }}>
-          <RideTypeCard name="標準" sub="4 人座" price={260} selected={rideType==="standard"} onSelect={()=>setRideType("standard")} />
-          <RideTypeCard name="優選" sub="豪華轎車" price={420} selected={rideType==="premium"} onSelect={()=>setRideType("premium")} />
+          <RideTypeCard name="標準" sub="標準4人座" price={260} selected={rideType==="standard"} onSelect={()=>setRideType("standard")} />
+          <RideTypeCard name="優選" sub="豪華出行" price={420} selected={rideType==="premium"} onSelect={()=>setRideType("premium")} />
         </div>
 
         <button
@@ -326,8 +339,8 @@ function ConfirmScreen({ orderData, onBack, onSubmit }) {
         {/* summary card */}
         <div style={S.card}>
           {[
-            ["出發", orderData.origin],
-            ["目的地", orderData.dest],
+            ["出發位置", orderData.origin],
+            ["目的地點", orderData.dest],
           ].map(([k,v]) => (
             <div key={k} style={{ display:"flex", justifyContent:"space-between", fontSize:13, padding:"5px 0" }}>
               <span style={{ color:TOKEN.gray400 }}>{k}</span>
@@ -345,15 +358,6 @@ function ConfirmScreen({ orderData, onBack, onSubmit }) {
               <span style={{ fontWeight: k==="預估費用" ? 700 : 500, fontSize: k==="預估費用" ? 15 : 13, color:TOKEN.black }}>{v}</span>
             </div>
           ))}
-        </div>
-
-        {/* API info */}
-        <div style={{
-          background:TOKEN.gray50, borderRadius:12, padding:"12px 14px",
-          fontSize:12, color:TOKEN.gray400, lineHeight:1.6,
-          border:`1px solid ${TOKEN.gray100}`,
-        }}>
-          送出後系統會透過 <strong style={{ color:TOKEN.gray800 }}>Ray OrderManager</strong> 建立 Actor 並開始配對司機
         </div>
 
         <div style={{ flex:1 }}/>

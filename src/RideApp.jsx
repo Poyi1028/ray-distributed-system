@@ -1,23 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { api } from "./api/api"
-
-// ─── 設計 token（與 Ray Admin dashboard 共用相同變數名稱）───
-const TOKEN = {
-  black: "#0a0a0a",
-  white: "#ffffff",
-  gray50: "#f8f8f6",
-  gray100: "#f0efe9",
-  gray200: "#dddcd6",
-  gray400: "#9c9a92",
-  gray600: "#5c5b56",
-  gray800: "#2a2a28",
-  green: "#1db954",
-  greenLight: "#e8f5ee",
-  amber: "#f59e0b",
-  amberLight: "#fffbeb",
-  red: "#ef4444",
-  blue: "#3b82f6",
-}
+import { TOKEN } from "./theme"
 
 // ─── 共用 style helpers ───
 const S = {
@@ -323,7 +306,7 @@ function HomeScreen({ onNext, etaData }) {
 }
 
 // ─── Screen: 確認訂單 ───
-function ConfirmScreen({ orderData, onBack, onSubmit }) {
+function ConfirmScreen({ orderData, onBack, onSubmit, submitting, errorMsg }) {
   return (
     <div style={{ display:"flex", flexDirection:"column", flex:1 }}>
       {/* header */}
@@ -361,8 +344,24 @@ function ConfirmScreen({ orderData, onBack, onSubmit }) {
         </div>
 
         <div style={{ flex:1 }}/>
-        <button style={S.btnPrimary} onClick={onSubmit}>送出訂單</button>
-        <button style={S.btnOutline} onClick={onBack}>返回修改</button>
+
+        {errorMsg && (
+          <div style={{
+            background:TOKEN.redLight, color:"#991b1b", borderRadius:12,
+            padding:"10px 14px", fontSize:13, textAlign:"center",
+          }}>
+            {errorMsg}
+          </div>
+        )}
+
+        <button
+          style={{ ...S.btnPrimary, opacity: submitting ? 0.6 : 1, cursor: submitting ? "default" : "pointer" }}
+          onClick={onSubmit}
+          disabled={submitting}
+        >
+          {submitting ? "送出中…" : "送出訂單"}
+        </button>
+        <button style={S.btnOutline} onClick={onBack} disabled={submitting}>返回修改</button>
       </div>
     </div>
   )
@@ -618,6 +617,8 @@ export default function RideApp() {
   const [driverInfo, setDriverInfo] = useState({ name:"王大明", rating:4.8, plate:"ABC-1234", eta:4 })
   const [fare, setFare] = useState(268)
   const [tripElapsed, setTripElapsed] = useState(0)
+  const [submitting, setSubmitting] = useState(false)  // 送出中，防重複點擊
+  const [errorMsg, setErrorMsg] = useState(null)        // 叫車失敗訊息
   const TRIP_TOTAL = 20
   const unsubRef = useRef(null)
 
@@ -647,23 +648,37 @@ export default function RideApp() {
   }
 
   const handleSubmit = async () => {
-    setTripStatus("pending")
-    setScreen("matching")
+    if (submitting) return        // 防止 await 期間重複點擊
+    setSubmitting(true)
+    setErrorMsg(null)
 
-    const { order_id } = await api.createRideOrder(orderData)
+    try {
+      const { order_id } = await api.createRideOrder(orderData)
 
-    unsubRef.current = api.subscribeRideOrder(order_id, ({ status, trip, result }) => {
-      setTripStatus(status)
-      if (status === "driver_assigned" && trip) {
-        setDriverInfo({ name: trip.driver_name, rating: trip.driver_rating, plate: trip.license_plate, eta: trip.estimated_arrival })
-        setScreen("driver")
-      } else if (status === "on_trip") {
-        setScreen("trip")
-      } else if (status === "completed") {
-        setFare(result?.fare ?? (orderData?.price ? orderData.price + 8 : 268))
-        setScreen("done")
-      }
-    })
+      setTripStatus("pending")
+      setScreen("matching")
+
+      unsubRef.current = api.subscribeRideOrder(order_id, ({ status, trip, result }) => {
+        setTripStatus(status)
+        if (status === "driver_assigned" && trip) {
+          setDriverInfo({ name: trip.driver_name, rating: trip.driver_rating, plate: trip.license_plate, eta: trip.estimated_arrival })
+          setScreen("driver")
+        } else if (status === "on_trip") {
+          setScreen("trip")
+        } else if (status === "completed") {
+          setFare(result?.fare ?? (orderData?.price ? orderData.price + 8 : 268))
+          setScreen("done")
+        } else if (status === "failed") {
+          setErrorMsg("叫車失敗，請稍後再試")
+        }
+      })
+    } catch (err) {
+      // 建立訂單失敗（後端錯誤／斷線）→ 退回確認頁並提示，不卡在配對中
+      setErrorMsg("無法送出訂單，請檢查連線後再試一次")
+      setScreen("confirm")
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const handleRestart = () => {
@@ -672,6 +687,7 @@ export default function RideApp() {
     setTripStatus("pending")
     setOrderData(null)
     setTripElapsed(0)
+    setErrorMsg(null)
   }
 
   return (
@@ -724,7 +740,7 @@ export default function RideApp() {
 
         <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden", minHeight:0 }}>
           {screen === "home"    && <HomeScreen onNext={handleConfirm} etaData={etaData} />}
-          {screen === "confirm" && orderData && <ConfirmScreen orderData={orderData} onBack={() => setScreen("home")} onSubmit={handleSubmit} />}
+          {screen === "confirm" && orderData && <ConfirmScreen orderData={orderData} onBack={() => setScreen("home")} onSubmit={handleSubmit} submitting={submitting} errorMsg={errorMsg} />}
           {screen === "matching"&& <MatchingScreen tripStatus={tripStatus} onCancel={handleRestart} />}
           {screen === "driver"  && <DriverScreen driverInfo={driverInfo} />}
           {screen === "trip"    && <TripScreen orderData={orderData} tripElapsed={tripElapsed} tripTotal={TRIP_TOTAL} />}

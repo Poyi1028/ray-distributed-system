@@ -344,8 +344,6 @@ function ConfirmScreen({ orderData, onBack, onSubmit, submitting, errorMsg }) {
           ))}
         </div>
 
-        <div style={{ flex:1 }}/>
-
         {errorMsg && (
           <div style={{
             background:TOKEN.redLight, color:"#991b1b", borderRadius:12,
@@ -363,6 +361,8 @@ function ConfirmScreen({ orderData, onBack, onSubmit, submitting, errorMsg }) {
           {submitting ? "送出中…" : "送出訂單"}
         </button>
         <button style={S.btnOutline} onClick={onBack} disabled={submitting}>返回修改</button>
+
+        <div style={{ flex:1 }}/>
       </div>
     </div>
   )
@@ -670,7 +670,10 @@ export default function RideApp() {
           setFare(result?.fare ?? (orderData?.price ? orderData.price + 8 : 268))
           setScreen("done")
         } else if (status === "failed") {
+          // 配對失敗：顯示訊息、退回確認頁讓使用者重試、並清除這次訂閱
           setErrorMsg("叫車失敗，請稍後再試")
+          setScreen("confirm")
+          if (unsubRef.current) { unsubRef.current(); unsubRef.current = null }
         }
       })
     } catch (err) {
